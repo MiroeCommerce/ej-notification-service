@@ -1,0 +1,22 @@
+# --- GENERAL ---
+myhostname = mail-relay.local
+mydomain = local
+myorigin = $mydomain
+mydestination =
+
+# --- RELAYHOST CONFIGURATION ---
+relayhost = [142.250.153.108]:587
+
+# --- SASL AUTHENTICATION ---
+smtp_use_tls = yes
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options = noanonymous
+
+# --- TLS CONFIGURATION ---
+smtp_tls_security_level = encrypt
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+
+# --- NETWORK CONFIGURATION ---
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128 172.17.0.0/16 192.168.0.0/16
+inet_interfaces = all
