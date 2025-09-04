@@ -1,0 +1,56 @@
+name: Build, Test, and Notify with Custom Relay
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+jobs:
+  build-test-and-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and Run Mail Relay Container
+        run: |
+          docker build -t mail-relay ./email-smtp-local
+          docker run -d -p 1025:25 --name my-mail-relay \
+            -e SMTP_RELAY=${{ secrets.SMTP_RELAY }} \
+            -e SMTP_USERNAME=${{ secrets.SMTP_USERNAME }} \
+            -e SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} \
+            mail-relay
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build and Test with Gradle
+        run: ./gradlew build
+
+      - name: Send Failure Notification
+        if: failure()
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run Email Client Script
+        if: failure()
+        run: python send_notification.py
+        env:
+          EMAIL_RECIPIENT: "ecommercedevbf@gmail.com"
+          EMAIL_SUBJECT: "Build Failed in ${{ github.repository }}"
+          EMAIL_BODY: |
+            A build has failed in the ${{ github.repository }} repository.
+
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+
+            Please review the failure at the following link:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
