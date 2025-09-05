@@ -18,20 +18,37 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Builds the image for the SMTP server
+          # STEP 1: DEBUG - Show the entrypoint script content
+      - name: Show Content of run.sh
+        run: |
+              echo "--- Content of ./email-smtp-local/run.sh ---"
+              cat ./email-smtp-local/run.sh
+              echo "-------------------------------------------"
+
       - name: Build Mail Relay Container
         run: docker build -t mail-relay ./email-smtp-local
 
       - name: List Docker Images After Build
         run: docker images
 
-      - name: Run Mail Relay Container
+      - name: Run Container and Check Logs
         run: |
-          echo "INFO: Attempting a test run WITHOUT secrets to isolate the issue..."
-          docker run -d -p 1025:25 --name my-mail-relay-test mail-relay
-          echo "INFO: Test run command finished. Checking container status..."
-          sleep 5
-          docker ps -a
+              echo "INFO: Final attempt to run with decoded secrets..."
+              docker run -d --name my-mail-relay \
+                -p 1025:25 \
+                -e SMTP_RELAY=$(echo "${{ secrets.SMTP_RELAY }}" | base64 --decode) \
+                -e SMTP_USERNAME=$(echo "${{ secrets.SMTP_USERNAME }}" | base64 --decode) \
+                -e SMTP_PASSWORD=$(echo "${{ secrets.SMTP_PASSWORD }}" | base64 --decode) \
+                mail-relay
+              
+              echo "INFO: Waiting for container to start..."
+              sleep 10
+              
+              echo "INFO: Checking status of all containers..."
+              docker ps -a
+              
+              echo "INFO: Showing logs for my-mail-relay container..."
+              docker logs my-mail-relay
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
