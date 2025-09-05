@@ -27,12 +27,11 @@ jobs:
 
       - name: Run Mail Relay Container
         run: |
-          echo "INFO: Attempting to run the image explicitly named 'mail-relay'..."
-          docker run -d -p 1025:25 --name my-mail-relay \
-                  -e SMTP_RELAY=${{ secrets.SMTP_RELAY }} \
-                  -e SMTP_USERNAME=${{ secrets.SMTP_USERNAME }} \
-                  -e SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }} \
-                  mail-relay
+          echo "INFO: Attempting a test run WITHOUT secrets to isolate the issue..."
+          docker run -d -p 1025:25 --name my-mail-relay-test mail-relay
+          echo "INFO: Test run command finished. Checking container status..."
+          sleep 5
+          docker ps -a
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
