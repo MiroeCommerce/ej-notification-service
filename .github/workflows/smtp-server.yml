@@ -61,7 +61,7 @@ jobs:
 
       - name: Run Email Client Script
         if: failure()
-        run: python send_notification.py
+        run: python ./email-smtp-local/send_notification.py
         env:
           EMAIL_RECIPIENT: "ecommercedevbf@gmail.com"
           EMAIL_SUBJECT: "Build Failed in ${{ github.repository }}"
