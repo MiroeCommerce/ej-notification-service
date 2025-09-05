@@ -18,6 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Builds the image for the SMTP server
       - name: Build and Run Mail Relay Container
         run: |
           docker build -t mail-relay ./email-smtp-local
