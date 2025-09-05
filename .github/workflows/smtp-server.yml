@@ -27,11 +27,7 @@ jobs:
 
       - name: Run Mail Relay Container
         run: |
-            docker run -d -p 1025:25 --name my-mail-relay \
-              -e SMTP_RELAY=$(echo "${{ secrets.SMTP_RELAY }}" | base64 --decode) \
-              -e SMTP_USERNAME=$(echo "${{ secrets.SMTP_USERNAME }}" | base64 --decode) \
-              -e SMTP_PASSWORD=$(echo "${{ secrets.SMTP_PASSWORD }}" | base64 --decode) \
-              mail-relay
+            docker run -d -p 1025:25 --name my-mail-relay -e SMTP_RELAY=$(echo "${{ secrets.SMTP_RELAY }}" | base64 --decode) -e SMTP_USERNAME=$(echo "${{ secrets.SMTP_USERNAME }}" | base64 --decode) -e SMTP_PASSWORD=$(echo "${{ secrets.SMTP_PASSWORD }}" | base64 --decode) mail-relay
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
