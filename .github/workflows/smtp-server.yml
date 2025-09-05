@@ -34,23 +34,14 @@ jobs:
       - name: Run Container and Check Logs
         run: |
           set -x
-#              echo "INFO: Final attempt to run with decoded secrets..."
-              docker run -d --name my-mail-relay \
+          
+          docker run -d --name my-mail-relay \
                 -p 1025:25 \
                 -e SMTP_RELAY=$(echo "${{ secrets.SMTP_RELAY }}" | base64 --decode) \
                 -e SMTP_USERNAME=$(echo "${{ secrets.SMTP_USERNAME }}" | base64 --decode) \
                 -e SMTP_PASSWORD=$(echo "${{ secrets.SMTP_PASSWORD }}" | base64 --decode) \
                 mail-relay
               
-#              echo "INFO: Waiting for container to start..."
-#              sleep 10
-#              
-#              echo "INFO: Checking status of all containers..."
-#              docker ps -a
-#              
-#              echo "INFO: Showing logs for my-mail-relay container..."
-#              docker logs my-mail-relay
-          
           set +x
 
       - name: Set up JDK 21
