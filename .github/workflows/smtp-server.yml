@@ -64,6 +64,8 @@ jobs:
       - name: Inspect the Mail Relay Container
         if: failure()
         run: |
+            sleep 10
+          
             echo "-------------------------------------------"
             echo "STEP 1: Checking status of all Docker containers..."
             docker ps -a
