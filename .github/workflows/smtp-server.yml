@@ -61,28 +61,40 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Wait for Mail Relay to Start
+      - name: Inspect the Mail Relay Container
+        if: always()
         run: |
-          echo "Waiting 15 seconds for the mail relay service to initialize..."
-          sleep 15
-        shell: bash
-
-      - name: Run Email Client Script
-        if: failure()
-        run: |
-            export EMAIL_BODY=$(cat <<EOF
-            A build has failed in the ${{ github.repository }} repository.
+            echo "Waiting 20 seconds to ensure container has time to start or fail..."
+            sleep 20
             
-            Branch: ${{ github.ref }}
-            Commit: ${{ github.sha }}
-            Author: ${{ github.actor }}
+            echo "-------------------------------------------"
+            echo "STEP 1: Checking status of all Docker containers..."
+            docker ps -a
+            echo "-------------------------------------------"
             
-            Please review the failure at the following link:
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            EOF
-            )
+            echo "STEP 2: Getting internal logs from the mail-relay container..."
+            # This is the most important command. It will show us Postfix's own error messages.
+            docker logs my-mail-relay
+            echo "-------------------------------------------"
             
+            echo "STEP 3: Checking network ports inside the container..."
+            # This will tell us if the mail server is actually listening for connections.
+            docker exec my-mail-relay netstat -tuln || echo "netstat command failed, container might not be running correctly."
+            echo "-------------------------------------------"
+            
+            echo "DEBUGGING COMPLETE. Now attempting to run the script..."
+            # We will still try to run the script to see the final error
             python ./email-smtp-local/send_notification.py
+
         env:
             EMAIL_RECIPIENT: "ecommerce-project@googlegroups.com"
             EMAIL_SUBJECT: "Build Failed in ${{ github.repository }}"
+            EMAIL_BODY: |
+              A build has failed in the ${{ github.repository }} repository.
+              
+              Branch: ${{ github.ref }}
+              Commit: ${{ github.sha }}
+              Author: ${{ github.actor }}
+              
+              Please review the failure at the following link:
+              ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
