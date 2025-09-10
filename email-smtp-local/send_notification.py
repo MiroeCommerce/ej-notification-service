@@ -16,6 +16,19 @@ msg['Subject'] = SUBJECT
 msg['From'] = SENDER
 msg['To'] = RECIPIENT
 
+print("--- Notification Script Logs ---")
+print(f"SMTP Server: {SMTP_HOST}:{SMTP_PORT}")
+print(f"Sender: {SENDER}")
+print(f"Recipient: {RECIPIENT}")
+print(f"Subject: {SUBJECT}")
+print("--- Email Body ---")
+print(BODY)
+print("--------------------")
+
+if not all([RECIPIENT, SUBJECT, BODY]):
+    print("Error: One or more required environment variables are empty.")
+    sys.exit(1)
+
 try:
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
         server.send_message(msg)
