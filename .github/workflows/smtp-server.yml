@@ -55,17 +55,17 @@ jobs:
       - name: Build and Test with Gradle
         run: ./gradlew build
 
-      - name: Wait for Mail Relay to Start
-        run: |
-            echo "Waiting 15 seconds for the mail relay service to initialize..."
-            sleep 15
-        shell: bash
-
       - name: Send Failure Notification
         if: failure()
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+
+      - name: Wait for Mail Relay to Start
+        run: |
+          echo "Waiting 15 seconds for the mail relay service to initialize..."
+          sleep 15
+        shell: bash
 
       - name: Run Email Client Script
         if: failure()
