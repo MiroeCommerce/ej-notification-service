@@ -18,7 +18,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-          # STEP 1: DEBUG - Show the entrypoint script content
       - name: Show Content of run.sh
         run: |
               echo "--- Content of ./email-smtp-local/run.sh ---"
@@ -33,7 +32,6 @@ jobs:
 
       - name: Run Container and Check Logs
         run: |          
-          
           set -x 
           
           docker run -d --name my-mail-relay \
@@ -56,6 +54,12 @@ jobs:
 
       - name: Build and Test with Gradle
         run: ./gradlew build
+
+      - name: Wait for Mail Relay to Start
+        run: |
+            echo "Waiting 15 seconds for the mail relay service to initialize..."
+            sleep 15
+        shell: bash
 
       - name: Send Failure Notification
         if: failure()
