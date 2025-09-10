@@ -62,28 +62,22 @@ jobs:
           python-version: '3.x'
 
       - name: Inspect the Mail Relay Container
-        if: always()
+        if: failure()
         run: |
-            echo "Waiting 20 seconds to ensure container has time to start or fail..."
-            sleep 20
-            
             echo "-------------------------------------------"
             echo "STEP 1: Checking status of all Docker containers..."
             docker ps -a
             echo "-------------------------------------------"
             
             echo "STEP 2: Getting internal logs from the mail-relay container..."
-            # This is the most important command. It will show us Postfix's own error messages.
             docker logs my-mail-relay
             echo "-------------------------------------------"
             
             echo "STEP 3: Checking network ports inside the container..."
-            # This will tell us if the mail server is actually listening for connections.
             docker exec my-mail-relay netstat -tuln || echo "netstat command failed, container might not be running correctly."
             echo "-------------------------------------------"
             
             echo "DEBUGGING COMPLETE. Now attempting to run the script..."
-            # We will still try to run the script to see the final error
             python ./email-smtp-local/send_notification.py
 
         env:
