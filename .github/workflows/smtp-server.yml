@@ -35,9 +35,9 @@ jobs:
         run: |          
           docker run -d --name my-mail-relay \
                 -p 1025:25 \
-                -e SMTP_RELAY="$(echo "${{ secrets.SMTP_RELAY }}" | base64 --decode)" \
-                -e SMTP_USERNAME="$(echo "${{ secrets.SMTP_USERNAME }}" | base64 --decode)" \
-                -e SMTP_PASSWORD="$(echo "${{ secrets.SMTP_PASSWORD }}" | base64 --decode)" \
+                -e SMTP_RELAY="${{ secrets.SMTP_RELAY }}" \
+                -e SMTP_USERNAME="${{ secrets.SMTP_USERNAME }}" \
+                -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
                 mail-relay
               
 
