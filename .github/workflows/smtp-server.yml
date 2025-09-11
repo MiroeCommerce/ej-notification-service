@@ -1,0 +1,92 @@
+name: Build, Test, and Notify with Custom Relay
+
+on:
+  push:
+    branches:
+      - develop
+
+  workflow_dispatch:
+
+jobs:
+  build-test-and-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Content of run.sh
+        run: |
+              echo "--- Content of ./email-smtp-local/run.sh ---"
+              cat ./email-smtp-local/run.sh
+              echo "-------------------------------------------"
+
+      - name: Build Mail Relay Container
+        run: docker build -t mail-relay ./email-smtp-local
+
+      - name: List Docker Images After Build
+        run: docker images
+
+      - name: Run Container and Check Logs
+        run: |          
+          set -x 
+          
+          docker run -d --name my-mail-relay \
+                -p 1025:25 \
+                -e SMTP_RELAY="${{ secrets.SMTP_RELAY }}" \
+                -e SMTP_USERNAME="${{ secrets.SMTP_USERNAME }}" \
+                -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
+                mail-relay
+              
+          set +x 
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build and Test with Gradle
+        run: ./gradlew build
+
+      - name: Send Failure Notification
+        if: failure()
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Inspect the Mail Relay Container
+        if: failure()
+        run: |
+            sleep 10
+          
+            echo "-------------------------------------------"
+            echo "STEP 1: Checking status of all Docker containers..."
+            docker ps -a
+            echo "-------------------------------------------"
+            
+            echo "STEP 2: Getting internal logs from the mail-relay container..."
+            docker logs my-mail-relay
+            echo "-------------------------------------------"
+            
+            echo "STEP 3: Checking network ports inside the container..."
+            docker exec my-mail-relay netstat -tuln || echo "netstat command failed, container might not be running correctly."
+            echo "-------------------------------------------"
+            
+            echo "DEBUGGING COMPLETE. Now attempting to run the script..."
+            python ./email-smtp-local/send_notification.py
+
+        env:
+            EMAIL_RECIPIENT: "ecommerce-project@googlegroups.com"
+            EMAIL_SUBJECT: "Build Failed in ${{ github.repository }}"
+            EMAIL_BODY: |
+              A build has failed in the ${{ github.repository }} repository.
+              
+              Branch: ${{ github.ref }}
+              Commit: ${{ github.sha }}
+              Author: ${{ github.actor }}
+              
+              Please review the failure at the following link:
+              ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
